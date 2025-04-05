@@ -240,6 +240,9 @@ int parseBody(token tokens[], int currPos, int size, int indent) {
          case If:
             currPos = parseIfLoop(tokens, currPos, size, indent + 1);
             break;
+         case Left:
+            currPos = parseStandaloneStmt(tokens, currPos, size, indent + 1);
+            break;
          default:
             printError(tokens[currPos], currPos, "valid expression");
             return -1;
@@ -389,6 +392,88 @@ int parseInput(token tokens[], int currPos, int size, int indent) {
 }
 
 
+// parse a standalone statement
+int parseStandaloneStmt(token tokens[], int currPos, int size, int indent) {
+   printIndent(indent);
+   
+   string content = "";
+   currPos = parseIncrement(tokens, currPos, size, content);
+
+   if (currPos == -1) {
+      return -1;
+   }
+
+   cout << content << ";\n";
+
+   return currPos;
+}
+
+
+// parse an increment/decrement statement
+int parseIncrement(token tokens[], int currPos, int size, string &content) {
+
+   if (currPos >= size) return -1;
+
+   if (tokens[currPos].ttype != TokenType::Left) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Left));
+      return -1;
+   }
+
+   currPos ++;
+   if (currPos >= size) return -1;
+
+   if (isPreIncrementOperator(tokens[currPos].ttype)) {
+      content += tokenToCPPString(tokens[currPos].ttype);
+
+      currPos++;
+      if (currPos >= size) return -1;
+
+      if (tokens[currPos].ttype != TokenType::Identifier) {
+         printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+         return -1;
+      }
+
+      content += tokens[currPos].content;
+
+      currPos ++;
+      if (currPos >= size) return -1;
+
+      if (tokens[currPos].ttype != TokenType::Right) {
+         printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Right));
+         return -1;
+      }
+
+      return currPos;
+
+   } else if (isPostIncrementOperator(tokens[currPos].ttype)) {
+      string op = tokenToCPPString(tokens[currPos].ttype);
+
+      currPos ++;
+      if (currPos >= size) return -1;
+
+      if (tokens[currPos].ttype != TokenType::Identifier) {
+         printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+         return -1;
+      }
+
+      content += tokens[currPos].content + op;
+
+      currPos++;
+      if (currPos >= size) return -1;
+
+      if (tokens[currPos].ttype != TokenType::Right) {
+         printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Right));
+         return -1;
+      }
+
+      return currPos;
+   }
+
+   printError(tokens[currPos], currPos, "Increment operation");
+   return -1;
+}
+
+
 // parse an if loop
 int parseIfLoop(token tokens[], int currPos, int size, int indent) {
 
@@ -504,6 +589,11 @@ int parseExpression(token tokens[], int currPos, int size, string &content) {
          content += tokens[currPos].content;
          return currPos;
    } else if (tokens[currPos].ttype == TokenType::Left) {
+      if ((currPos + 1) >= size) return -1;
+      if (isIncrementOperator(tokens[currPos + 1].ttype)) {
+         return (parseIncrement(tokens, currPos, size, content));
+      }
+
       content += "(";
       currPos ++;
       if (currPos >= size) return -1;
@@ -560,7 +650,7 @@ int parseExpression(token tokens[], int currPos, int size, string &content) {
    return -1;
 }
 
-// parse an expression
+// parse a conditional expression
 int parseCondExpression(token tokens[], int currPos, int size, string &content) {
 
    if (currPos >= size) return -1;
@@ -682,6 +772,14 @@ string tokenToCPPString(TokenType type) {
          return "/";
       case Rem:
          return "%";
+      case AddAdd:
+         return "++";
+      case SubSub:
+         return "--";
+      case AddAddPre:
+         return "++";
+      case SubSubPre:
+         return "--";
       case EQOp:
          return "==";
       case NEOp:
@@ -730,6 +828,26 @@ bool isVariableType(TokenType token) {
 }
 
 
+// returns true if token is a valid type for a parameter
+bool isParameterType(TokenType token) {
+   return (token == TokenType::IntType
+      || token == TokenType::RealType
+      || token == TokenType::TextType
+      || token == TokenType::BoolType
+      || token == TokenType::VoidType);
+}
+
+
+// returns true if the token is a valid type for a procedure return
+bool isReturnType(TokenType token) {
+   return (token == TokenType::IntType
+      || token == TokenType::RealType
+      || token == TokenType::TextType
+      || token == TokenType::BoolType
+      || token == TokenType::VoidType);
+}
+
+
 // returns true if the token is a literal value
 bool isLiteralValue(TokenType token) {
    return (token == TokenType::IntLit
@@ -761,6 +879,29 @@ bool isBinaryOperator(TokenType token) {
 bool isUnaryOperator(TokenType token) {
 return (token == TokenType::Negate
       || token == TokenType::NotOp);
+}
+
+
+// returns true if the token is an increment operator
+bool isIncrementOperator(TokenType token) {
+   return (token == TokenType::AddAdd
+      || token == TokenType::SubSub
+      || token == TokenType::AddAddPre
+      || token == TokenType::SubSubPre);
+}
+
+
+// returns true if the token is a postfix increment operator
+bool isPostIncrementOperator(TokenType token) {
+   return (token == TokenType::AddAdd
+      || token == TokenType::SubSub);
+}
+
+
+// returns true if the token is a prefix increment operator
+bool isPreIncrementOperator(TokenType token) {
+   return (token == TokenType::AddAddPre
+      || token == TokenType::SubSubPre);
 }
 
 

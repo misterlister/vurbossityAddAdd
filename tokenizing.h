@@ -14,10 +14,12 @@ using namespace std;
 // enumeration of all the token types
 enum TokenType {
    Comment = -5, LoneQuote = -4, EndText = -3, StartText = -2, Invalid = -1,
-   Begin, End, Main, IntLit, RealLit, TextLit, Identifier, BoolLit,
-   GlobalDef, ProcDef, VarDef, AndOp, OrOp, NotOp, Negate, Call, Read, Write,
-   LTOp, GTOp, LEOp, GEOp, EQOp, NEOp, Left, Right, If, Else,
-   Add, Sub, Mul, Div, Rem, Set, IntType, RealType, TextType, BoolType
+   Begin, End, Main, IntLit, RealLit, TextLit, BoolLit, Identifier,
+   GlobalDef, ProcDef, VarDef, Set, Call, Read, Write,
+   Left, Right, If, Else, Return, Struct, Array,
+   LTOp, GTOp, LEOp, GEOp, EQOp, NEOp, AndOp, OrOp, NotOp, Negate,
+   Add, Sub, Mul, Div, Rem, AddAdd, SubSub, AddAddPre, SubSubPre,
+   IntType, RealType, TextType, BoolType, VoidType,
 };
 
 const unordered_map<TokenType, string> TokenName = {
@@ -54,11 +56,19 @@ const unordered_map<TokenType, string> TokenName = {
    {Mul, "MultiplyOp"},
    {Div, "DivideOp"},
    {Rem, "RemainderOp"},
+   {AddAdd, "IncrementOp"},
+   {SubSub, "DecrementOp"},
+   {AddAddPre, "IncrementOpPrefix"},
+   {SubSubPre, "DecrementOpPrefix"},
    {Set, "Set"},
    {IntType, "IntType"},
    {RealType, "RealType"},
    {TextType, "TextType"},
-   {BoolType, "BoolType"}
+   {BoolType, "BoolType"},
+   {VoidType, "VoidType"},
+   {Struct, "Struct"},
+   {Array, "Array"},
+   {Return, "Return"},
 };
 
 const vector<pair<TokenType, regex>> TokenRegex = {
@@ -90,11 +100,19 @@ const vector<pair<TokenType, regex>> TokenRegex = {
    {Mul, regex("^mul")},
    {Div, regex("^div")},
    {Rem, regex("^rem")},
+   {AddAdd, regex("^addadd")},
+   {SubSub, regex("^subsub")},
+   {AddAddPre, regex("^addaddpre")},
+   {SubSubPre, regex("^subsubpre")},
    {Set, regex("^set")},
    {IntType, regex("^integer")},
    {RealType, regex("^real")},
    {TextType, regex("^text")},
    {BoolType, regex("^boolean")},
+   {VoidType, regex("^void")},
+   {Struct, regex("^struct")},
+   {Array, regex("^array")},
+   {Return, regex("^return")},
    {RealLit, regex("^[0-9]+[.][0-9]+")},
    {IntLit, regex("^[0-9]+")},
    {BoolLit, regex("^true|false")},

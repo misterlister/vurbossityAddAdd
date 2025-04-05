@@ -54,6 +54,14 @@ int parseOutput(token tokens[], int currPos, int size, int indent);
 int parseInput(token tokens[], int currPos, int size, int indent);
 
 
+// parse a standalone statement
+int parseStandaloneStmt(token tokens[], int currPos, int size, int indent);
+
+
+// parse an increment/decrement statement
+int parseIncrement(token tokens[], int currPos, int size, string &content);
+
+
 // parse an if loop
 int parseIfLoop(token tokens[], int currPos, int size, int indent);
 
@@ -84,11 +92,6 @@ void printSectionError(string sectionName);
 void printCondOpError(int currPos);
 
 
-// takes a tokenType representing a variable type, and returns
-// the equivalent type string in C++
-string varTypeTokenToString(TokenType type);
-
-
 // takes a tokenType and returns the string that represents
 // the equivalent feature in C++
 string tokenToCPPString(TokenType type);
@@ -102,6 +105,14 @@ void printIndent(int indent);
 bool isVariableType(TokenType token);
 
 
+// returns true if token is a valid type for a parameter
+bool isParameterType(TokenType token);
+
+
+// returns true if the token is a valid type for a procedure return
+bool isReturnType(TokenType token);
+
+
 // returns true if the token is a literal value
 bool isLiteralValue(TokenType token);
 
@@ -112,6 +123,18 @@ bool isBinaryOperator(TokenType token);
 
 // returns true if the token is a unary operator
 bool isUnaryOperator(TokenType token);
+
+
+// returns true if the token is an increment operator
+bool isIncrementOperator(TokenType token);
+
+
+// returns true if the token is a postfix increment operator
+bool isPostIncrementOperator(TokenType token);
+
+
+// returns true if the token is a prefix increment operator
+bool isPreIncrementOperator(TokenType token);
 
 
 // returns true if the token is a conditional operator
