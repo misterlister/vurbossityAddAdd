@@ -17,6 +17,7 @@ enum TokenType {
    Begin, End, Main, IntLit, RealLit, TextLit, BoolLit, Identifier,
    GlobalDef, ProcDef, VarDef, Set, Call, Read, Write,
    Left, Right, If, Else, Return, Struct, Array,
+   ArrayDef, ArraySet, ArrayAccess,
    LTOp, GTOp, LEOp, GEOp, EQOp, NEOp, AndOp, OrOp, NotOp, Negate,
    Add, Sub, Mul, Div, Rem, AddAdd, SubSub, AddAddPre, SubSubPre,
    IntType, RealType, TextType, BoolType, VoidType,
@@ -67,6 +68,9 @@ const unordered_map<TokenType, string> TokenName = {
    {BoolType, "BoolType"},
    {VoidType, "VoidType"},
    {Struct, "Struct"},
+   {ArraySet, "ArraySet"},
+   {ArrayDef, "ArrayDef"},
+   {ArrayAccess, "ArrayAccess"},
    {Array, "Array"},
    {Return, "Return"},
 };
@@ -111,6 +115,9 @@ const vector<pair<TokenType, regex>> TokenRegex = {
    {BoolType, regex("^boolean")},
    {VoidType, regex("^void")},
    {Struct, regex("^struct")},
+   {ArraySet, regex("^arraydef")},
+   {ArrayDef, regex("^arrayset")},
+   {ArrayAccess, regex("^arrayaccess")},
    {Array, regex("^array")},
    {Return, regex("^return")},
    {RealLit, regex("^[0-9]+[.][0-9]+")},
@@ -121,7 +128,7 @@ const vector<pair<TokenType, regex>> TokenRegex = {
    {StartText, regex(R"(^"[^"]*)")},
    {EndText, regex(R"(^[^"]*")")},
    {Comment, regex("^COM")},
-   {Identifier, regex("[a-zA-Z]+")},
+   {Identifier, regex("[a-zA-Z][a-zA-Z0-9_]*")},
 };
 
 
