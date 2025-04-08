@@ -86,13 +86,14 @@ int parseGlobals(token tokens[], int currPos, int size) {
    while (tokens[currPos].ttype == TokenType::ProcDef) {
       currPos = parseProcedureDef(tokens, currPos, size);
 
-      currPos++;
-
-      if (currPos >= size) return currPos;
       if (currPos == -1) {
          printSectionError("Procedure Declaration");
          return -1;
       }
+
+      currPos++;
+
+      if (currPos >= size) return currPos;
    }
 
    return currPos;
@@ -142,6 +143,7 @@ int parseProcedureDef(token tokens[], int currPos, int size) {
    
    string procname = "";
    string params = "";
+   string retType = "";
 
    if (tokens[currPos].ttype != TokenType::ProcDef) {
       printError(tokens[currPos], currPos, tokenTypeToString(TokenType::ProcDef));
@@ -186,7 +188,6 @@ int parseProcedureDef(token tokens[], int currPos, int size) {
 
          params += tokens[currPos].content;
          currPos++;
-
          if (currPos >= size) return -1;
    }
 
@@ -197,7 +198,17 @@ int parseProcedureDef(token tokens[], int currPos, int size) {
       return -1;
    }
 
-   cout << "void " << procname << "(" << params << ")\n";
+   if (currPos+1 >= size) return -1;
+
+   // does this procedure have a return type?
+   if (isReturnType(tokens[currPos+1].ttype)) {
+      currPos++;
+      retType = tokenToCPPString(tokens[currPos].ttype);
+   } else {
+      retType = tokenToCPPString(TokenType::VoidType);
+   }
+
+   cout << retType << " " << procname << "(" << params << ")\n";
 
    return parseBody(tokens, currPos+1, size, 0);
 }
@@ -220,10 +231,14 @@ int parseBody(token tokens[], int currPos, int size, int indent) {
    currPos++;
    if (currPos >= size) return -1;
 
+
    while (tokens[currPos].ttype != TokenType::End) {
+      string content = "";
       switch (tokens[currPos].ttype) {
          case Call:
-            currPos = parseProcedureCall(tokens, currPos, size, indent + 1);
+            printIndent(indent + 1);
+            currPos = parseProcedureCall(tokens, currPos, size, content);
+            cout << content << "\n;";
             break;
          case Set:
             currPos = parseSetStmt(tokens, currPos, size, indent + 1);
@@ -242,6 +257,12 @@ int parseBody(token tokens[], int currPos, int size, int indent) {
             break;
          case Left:
             currPos = parseStandaloneStmt(tokens, currPos, size, indent + 1);
+            break;
+         case ArrayDef:
+            currPos = parseArrayDef(tokens, currPos, size, indent + 1);
+            break;
+         case Return:
+            currPos = parseReturnStmt(tokens, currPos, size, indent + 1);
             break;
          default:
             printError(tokens[currPos], currPos, "valid expression");
@@ -394,7 +415,6 @@ int parseInput(token tokens[], int currPos, int size, int indent) {
 
 // parse a standalone statement
 int parseStandaloneStmt(token tokens[], int currPos, int size, int indent) {
-   printIndent(indent);
    
    string content = "";
    currPos = parseIncrement(tokens, currPos, size, content);
@@ -403,6 +423,31 @@ int parseStandaloneStmt(token tokens[], int currPos, int size, int indent) {
       return -1;
    }
 
+   printIndent(indent);
+   cout << content << ";\n";
+
+   return currPos;
+}
+
+
+// parse a return statement
+int parseReturnStmt(token tokens[], int currPos, int size, int indent) {
+
+   if (tokens[currPos].ttype != TokenType::Return) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Return));
+      return -1;
+   }
+
+   currPos ++;
+   if (currPos >= size) return -1;
+
+   string content = tokenToCPPString(TokenType::Return) + " ";
+
+   currPos = parseExpression(tokens, currPos, size, content);
+
+   if (currPos >= size || currPos == -1) return -1;
+
+   printIndent(indent);
    cout << content << ";\n";
 
    return currPos;
@@ -521,11 +566,10 @@ int parseIfLoop(token tokens[], int currPos, int size, int indent) {
 
 
 // parse a procedure call
-int parseProcedureCall(token tokens[], int currPos, int size, int indent) {
+int parseProcedureCall(token tokens[], int currPos, int size, string &content) {
 
    if (currPos >= size) return currPos;
 
-   string procName = "";
    string args = "";
 
    if (tokens[currPos].ttype != TokenType::Call) {
@@ -541,7 +585,7 @@ int parseProcedureCall(token tokens[], int currPos, int size, int indent) {
          return -1;
    }
 
-   procName = tokens[currPos].content;
+   content += tokens[currPos].content;
 
    currPos++;
    if (currPos >= size) return size;
@@ -572,8 +616,7 @@ int parseProcedureCall(token tokens[], int currPos, int size, int indent) {
       return -1;
    }
 
-   printIndent(indent);
-   cout << procName << "(" << args << ");\n";
+   content += "(" + args + ")";
 
    return currPos;
 }
@@ -588,10 +631,13 @@ int parseExpression(token tokens[], int currPos, int size, string &content) {
       || isLiteralValue(tokens[currPos].ttype)) {
          content += tokens[currPos].content;
          return currPos;
+
+   } else if (tokens[currPos].ttype == TokenType::Call) {
+      return parseProcedureCall(tokens, currPos, size, content);
    } else if (tokens[currPos].ttype == TokenType::Left) {
       if ((currPos + 1) >= size) return -1;
       if (isIncrementOperator(tokens[currPos + 1].ttype)) {
-         return (parseIncrement(tokens, currPos, size, content));
+         return parseIncrement(tokens, currPos, size, content);
       }
 
       content += "(";
@@ -650,6 +696,7 @@ int parseExpression(token tokens[], int currPos, int size, string &content) {
    return -1;
 }
 
+
 // parse a conditional expression
 int parseCondExpression(token tokens[], int currPos, int size, string &content) {
 
@@ -664,7 +711,13 @@ int parseCondExpression(token tokens[], int currPos, int size, string &content) 
    currPos ++;
    if (currPos >= size) return -1;
 
-   if (isBinaryOperator(tokens[currPos].ttype)) {
+   // expression is a boolean literal or identifier
+   if (tokens[currPos].ttype == TokenType::BoolLit
+   || tokens[currPos].ttype == TokenType::Identifier) {
+      content += tokens[currPos].content;
+   }
+   // expression uses a binary operator
+   else if (isBinaryOperator(tokens[currPos].ttype)) {
       if (!isCondOperator(tokens[currPos].ttype)) {
          printCondOpError(currPos);
          return -1;
@@ -689,6 +742,7 @@ int parseCondExpression(token tokens[], int currPos, int size, string &content) 
       }
 
       if (currPos == -1) return -1;
+   // expression uses a unary operator
    } else if (isUnaryOperator(tokens[currPos].ttype)) {
       if (!isCondOperator(tokens[currPos].ttype)) {
          printCondOpError(currPos);
@@ -704,6 +758,7 @@ int parseCondExpression(token tokens[], int currPos, int size, string &content) 
       }
 
       if (currPos == -1) return -1;
+   // not a valid conditional expression
    } else {
       printError(tokens[currPos], currPos, "Conditional operator");
       return -1;
@@ -718,6 +773,56 @@ int parseCondExpression(token tokens[], int currPos, int size, string &content) 
    }
    
    content += ")";
+   return currPos;
+}
+
+
+// parse an implementation of an array
+int parseArrayDef(token tokens[], int currPos, int size, int indent) {
+   
+   if (currPos >= size) return currPos;
+
+   string varname = "";
+   string arrayType = "";
+   string arraySize = "";
+
+   if (tokens[currPos].ttype != TokenType::ArrayDef) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::ArrayDef));
+      return -1;
+   }
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+      return -1;
+   }
+
+   varname = tokens[currPos].content;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (!isVariableType(tokens[currPos].ttype)) {
+      printError(tokens[currPos], currPos, "Type Specifier");
+      return -1;
+   }
+
+   arrayType = tokenToCPPString(tokens[currPos].ttype);
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::IntLit) {
+      printError(tokens[currPos], currPos, "Array Size");
+      return -1;
+
+      arraySize = tokens[currPos].content;
+   }
+
+   printIndent(indent);
+   cout << arrayType << " " << varname << "[" << arraySize << "];\n";
    return currPos;
 }
 
@@ -758,6 +863,8 @@ string tokenToCPPString(TokenType type) {
          return "string";
       case BoolType:
          return "bool";
+      case VoidType:
+         return "void";
       case Begin:
          return "{";
       case End:
@@ -804,6 +911,8 @@ string tokenToCPPString(TokenType type) {
          return "\nint main()\n";
       case If:
          return "while";
+      case Return:
+         return "return";
       default:
          cerr << "Error: Invalid token type: " << tokenTypeToString(type) << endl;
          return "";

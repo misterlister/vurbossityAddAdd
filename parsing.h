@@ -58,6 +58,10 @@ int parseInput(token tokens[], int currPos, int size, int indent);
 int parseStandaloneStmt(token tokens[], int currPos, int size, int indent);
 
 
+// parse a return statement
+int parseReturnStmt(token tokens[], int currPos, int size, int indent);
+
+
 // parse an increment/decrement statement
 int parseIncrement(token tokens[], int currPos, int size, string &content);
 
@@ -67,7 +71,7 @@ int parseIfLoop(token tokens[], int currPos, int size, int indent);
 
 
 // parse a procedure call
-int parseProcedureCall(token tokens[], int currPos, int size, int indent);
+int parseProcedureCall(token tokens[], int currPos, int size, string &content);
 
 
 // parse an expression
@@ -76,6 +80,10 @@ int parseExpression(token tokens[], int currPos, int size, string &content);
 
 // parse a conditional expression
 int parseCondExpression(token tokens[], int currPos, int size, string &content);
+
+
+// parse an implementation of an array
+int parseArrayDef(token tokens[], int currPos, int size, int indent);
 
 
 // prints an error message to cerr indicating the type and position
