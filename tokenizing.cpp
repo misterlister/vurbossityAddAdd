@@ -7,7 +7,6 @@
 // and returning the number of valid tokens read
 int tokenize(token tokens[])
 {
-   cout << "Beginning Scanning:\n" << endl;
    int pos = 0;
    string word = "";
 
