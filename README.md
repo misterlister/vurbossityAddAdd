@@ -32,8 +32,9 @@ Language tokens (all case sensitive)
 ### Keywords
 
    begin end (used to mark the beginning and end of most blocks)
-   pdef gdef vdef (used to denote definitions of procedures, global vars, local vars)
+   pdef gdef sdef vdef (used to denote definitions of procedures, global vars, structs, local vars)
    if else (used for if/else loops)
+   integer boolean real text void (type specifiers)
    add sub mul div rem (math operators)
    lt gt le ge ne eq (comparison operators)
    addadd subsub addaddpre subsubpre (increment operators)
@@ -42,6 +43,8 @@ Language tokens (all case sensitive)
    left right (used to bracket expressions)
    call (used to call a procedure)
    return (used to return a value from a procedure)
+   arraydef arrayset arrayaccess array (used with arrays)
+   structtype structbuild structelemset structindirelemset structelemaccess structindirelemaccess (used with structs)
 
 ### Literal values
 
@@ -200,15 +203,7 @@ Identifiers:
  - when assigning values the types of the left and right hand sides must match, with the exception that integer values will automatically be cast to reals if assigned to a real variable
  - similarly values passed to parameters must be of matching types with the exception of passing integers to reals (where again the integer value is automatically cast to real)
 
-## New Additions
-
-### Types
-
-void
-array
-struct
-
-### Operators
+### Syntax
 
 #### AddAdd
 
@@ -222,11 +217,7 @@ left subsub *identifier* right
 
 left subsubpre *identifier* right
 
-### Functions
-
 #### Declare Return Type
-
-- Cannot return a struct or array from a procedure
 
 pdef *identifier* left *paramtype* *paramidentifier* right *returntype*
 begin
@@ -241,7 +232,7 @@ set *variableident* call *ident* left *params* right
 
 #### Structure Definition
 
-structdef *identifier*
+sdef *identifier*
 begin
     element *identifier* *type*
     element *identifier* *type*
@@ -253,27 +244,27 @@ structbuild *structIdentifier* *instanceIdentifier*
 
 #### Structure Modify Element
 
-*structIdentifier* elemset *elementIdentifier* *value*
+structelemset *structIdentifier* *elementIdentifier* *value*
 
 #### Structure Modify Element Via Pointer
 
-*structIdentifier* indirelemset *elementIdentifier* *value*
+structindirelemset *structIdentifier* *elementIdentifier* *value*
 
 #### Structure Access Element
 
-*structIdentifier* elemaccess *elementIdentifier*
+structelemaccess *structIdentifier* *elementIdentifier*
 
 #### Structure Access Element Via Pointer
 
-*structIdentifier* indirelemaccess *elementIdentifier*
+structindirelemaccess *structIdentifier* *elementIdentifier*
 
-#### Pass Structure To Procedure
+#### Structure As Procedure Parameter
 
-pdef *identifier* left struct *structidentifier* right *returntype*
+pdef *identifier* left structtype *structidentifier* right *returntype*
 
 #### Array Definition
 
-arraydef *identifier* *type* *size*
+*deftype* array *identifier* *type* *size*
 
 #### Array Modify Element
 
@@ -283,10 +274,6 @@ arrayset *identifier* *index* *value*
 
 arrayaccess *identifier* *index*
 
-#### Pass Array To Procedure
+#### Array As Procedure Parameter
 
 pdef *identifier* left array *arraytype* *arrayidentifier* right *returntype*
-
-### Functional changes
-
-- boolean values work as conditionals
