@@ -33,7 +33,7 @@ g++ "${CPP_FILE}" -o "${EXE_FILE}"
 
 # Check if compilation was successful
 if [ $? -eq 0 ]; then
-    echo "Compilation successful!"
+    echo "Compilation was successful!"
     echo "C++ file: ${CPP_FILE}"
     echo "Executable: ${EXE_FILE}"
 else
