@@ -1,0 +1,22 @@
+gdef total integer
+
+pdef addTwoNumbers
+left integer a integer b right void
+begin
+    vdef result integer
+    set result left add a b right
+    set total result
+end
+
+main
+begin
+    vdef num1 integer
+    write "Please enter an integer"
+    read num1
+    vdef num2 integer
+    write "Please enter another integer"
+    read num2
+    call addTwoNumbers left num1 num2 right
+    write "The sum is: "
+    write total
+end

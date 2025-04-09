@@ -1,0 +1,97 @@
+sdef Creature
+begin
+    element name text
+    element hp integer
+    element energy integer
+end
+
+pdef initCreature left structtype Creature creature right void
+begin
+    structindirelemset creature name "Unnamed"
+    structindirelemset creature hp 100
+    structindirelemset creature energy 50
+end
+
+pdef damageCreature left structtype Creature attacker structtype Creature defender right void
+begin
+    vdef damage integer
+    set damage structindirelemaccess attacker energy
+    structindirelemset defender hp left sub structindirelemaccess defender hp damage right
+end
+
+pdef healCreature left structtype Creature creature right void
+begin
+    vdef heal integer
+    set heal left div structindirelemaccess creature energy 2 right
+    structindirelemset creature hp left add structindirelemaccess creature hp heal right
+end
+
+pdef printCreature left structtype Creature creature right void
+begin
+    write "Name: "
+    write structindirelemaccess creature name
+    write "HP: "
+    write structindirelemaccess creature hp
+    write "Energy: "
+    write structindirelemaccess creature energy
+end
+
+pdef powerUpCreature left structtype Creature creature right void
+begin
+    vdef boost integer
+    set boost 20
+    structindirelemset creature energy left add structindirelemaccess creature energy boost right
+end
+
+main
+begin
+    structbuild Creature player
+    structbuild Creature enemy
+
+    call initCreature left player right
+    call initCreature left enemy right
+
+    structelemset player name "Tim the Enchanter"
+    structelemset enemy name "Killer Rabbit"
+
+    write "Player Info:"
+    call printCreature left player right
+
+    write ""
+
+    write "Enemy Info:"
+    call printCreature left enemy right
+
+    write ""
+
+    write left add left add structelemaccess player name " is attacked by " right structelemaccess enemy name right
+    call damageCreature left enemy player right
+
+    write ""
+
+    write "Updated Player Info:"
+    call printCreature left player right
+
+    write ""
+
+    write left add structelemaccess player name " heals!" right
+    call healCreature left player right
+
+    write left add structelemaccess player name " pulls out holy hand grenade!" right
+    call powerUpCreature left player right
+
+    write ""
+
+    write "Updated Player Info:"
+    call printCreature left player right
+
+    write ""
+
+    write left add structelemaccess enemy name " is blasted by the grenade!" right
+    call damageCreature left player enemy right
+
+    write ""
+
+    write "Updated Enemy Info:"
+    call printCreature left enemy right
+end

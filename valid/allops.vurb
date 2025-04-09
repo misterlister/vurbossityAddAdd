@@ -1,0 +1,95 @@
+COM second example: a program containing an if statement
+COM    with conditions and bodies that use every operator in the language
+
+pdef foo left integer i text str boolean happy right text
+begin
+   vdef myfoo text       COM just to show use of a local
+   write "Please enter a real number"
+   read myfoo
+   if left not left happy right right
+   begin
+      return "happy!"
+   end
+   else
+   begin
+      return "unhappy!"
+   end
+end
+
+main
+begin
+   vdef r real
+   vdef i integer
+   vdef t text
+
+   COM get the initial values from the user
+   write "Enter an integer"
+   read i
+   write "Enter a real"
+   read r
+   write "Enter a word"
+   read t
+
+   COM giant ugly condition:
+   COM    if !( ((r=1.234)||(i!=2004)) &&
+   COM       (((r<0.001)&&(i>0)) || ((t <= "abc")&&(t >= "xyz"))))
+   if left not
+           left and
+                left or
+                     left eq r 1.234 right
+                     left ne i 2004 right
+                right
+                left or
+                     left and
+                          left lt r 0.001 right
+                          left gt i 0 right
+                     right
+                     left and
+                          left le t "abc" right
+                          left ge t "xyz" right
+                     right
+                right
+           right
+      right
+   begin
+      set r left div
+                 left add
+                      left div 200 r right
+                      99.99
+                 right
+                 left mul
+                      0.001
+                      left sub
+                          left neg r right
+                          77
+                      right
+                 right
+            right
+      set i left rem i 13 right
+   end
+   else
+   begin
+      set t "Ooops, that was not the setup I wanted"
+   end
+
+   COM write out the results
+   write "The resulting real is"
+   write r
+   write "and the integer is"
+   write i
+   write "and the word is"
+   write t
+
+   COM try some increment operators
+   left addadd i right
+   left subsub i right
+   left addaddpre i right
+   left subsubpre i right
+
+   write "and now the integer is"
+   write i
+
+   set i left mul left addadd i right 10 right
+   set i left mul left addaddpre i right left subsub i right right
+   set t left add t "more text" right
+end

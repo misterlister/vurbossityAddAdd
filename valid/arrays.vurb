@@ -1,0 +1,64 @@
+gdef array myArray integer 5
+gdef sumResults integer
+gdef array modifiedArray integer 5
+
+pdef initArray left array integer myArray right void
+begin
+    arrayset myArray 0 1
+    arrayset myArray 1 2
+    arrayset myArray 2 3
+    arrayset myArray 3 4
+    arrayset myArray 4 5
+end
+
+pdef sumArray left array integer myArray right integer
+begin
+    vdef index integer
+    vdef total integer
+    set total 0
+    set index 0
+    if left lt index 5 right
+    begin
+        set total left add total arrayaccess myArray index right
+        left addadd index right
+    end
+    return total
+end
+
+pdef multiplyArray left array integer myArray right void
+begin
+    vdef index integer
+    set index 0
+    if left lt index 5 right
+    begin
+        arrayset myArray index left mul arrayaccess myArray index 2 right
+        left addadd index right
+    end
+end
+
+pdef printArray left array integer arr integer size right void
+begin
+    vdef index integer
+    set index 0
+    if left lt index size right
+    begin
+        write arrayaccess arr index
+        left addadd index right
+    end
+end
+
+main
+begin
+    call initArray left myArray right
+    write "Original array: "
+    call printArray left myArray 5 right
+    set sumResults call sumArray left myArray right
+    write "Original sum: "
+    write sumResults
+    call multiplyArray left myArray right
+    write "Multiplied array: "
+    call printArray left myArray 5 right
+    set sumResults call sumArray left myArray right
+    write "New sum: "
+    write sumResults
+end

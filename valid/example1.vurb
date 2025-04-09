@@ -1,0 +1,36 @@
+COM some global variable declarations
+gdef foo text
+gdef blah integer
+gdef ick real
+
+COM A procedure that sets foo and blah to parameters str and i,
+    COM and prompts the user for a value which it reads into a local variable
+    COM then uses that to set ick
+pdef getvals left integer i text str right
+begin
+   vdef myfoo text       COM just to show use of a local
+   write "Please enter a real number"
+   read myfoo
+   set foo myfoo
+end
+
+main
+begin
+   vdef result real
+   call getvals left 123 "hope this works" right
+   set result left add blah ick right  COM implicitly converts int to real for the add op
+   write foo
+   write result
+   vdef startval integer
+   set startval 3
+   COM show an if loop example
+   if left lt startval blah right
+   begin
+      write startval
+      set startval left add startval 1 right COM basically startval++
+   end
+   else
+   begin
+      write "I think we're done!"
+   end
+end
