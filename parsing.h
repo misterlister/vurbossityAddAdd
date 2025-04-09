@@ -34,6 +34,14 @@ int parseGlobalVars(token tokens[], int currPos, int size);
 int parseProcedureDef(token tokens[], int currPos, int size);
 
 
+// parse a struct definition
+int parseStructDef(token tokens[], int currPos, int size);
+
+
+// parse a struct element
+int parseStructElem(token tokens[], int currPos, int size, string &content);
+
+
 // parse a body of code
 int parseBody(token tokens[], int currPos, int size, int indent);
 
@@ -82,8 +90,28 @@ int parseExpression(token tokens[], int currPos, int size, string &content);
 int parseCondExpression(token tokens[], int currPos, int size, string &content);
 
 
-// parse an implementation of an array
-int parseArrayDef(token tokens[], int currPos, int size, int indent);
+// parse the creation of an array
+int parseArrayDef(token tokens[], int currPos, int size, string &content);
+
+
+// parse an array set statement
+int parseArraySet(token tokens[], int currPos, int size, string &content);
+
+
+// parse an array access statement
+int parseArrayAccess(token tokens[], int currPos, int size, string &content);
+
+
+// parse a struct build statement
+int parseStructBuild(token tokens[], int currPos, int size, int indent);
+
+
+// parse a struct set statement
+int parseStructSet(token tokens[], int currPos, int size, int indent);
+
+
+// parse a struct access statement
+int parseStructAccess(token tokens[], int currPos, int size, string &content);
 
 
 // prints an error message to cerr indicating the type and position

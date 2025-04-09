@@ -79,13 +79,30 @@ int parseGlobals(token tokens[], int currPos, int size) {
       }
    }
 
+   if (tokens[currPos].ttype == TokenType::StructDef) {
+      cout << "\n";
+   }
+
+   while (tokens[currPos].ttype == TokenType::StructDef) {
+      currPos = parseStructDef(tokens, currPos, size);
+      cout << "\n";
+      if (currPos == -1) {
+         printSectionError("Struct Declaration");
+         return -1;
+      }
+
+      currPos++;
+
+      if (currPos >= size) return currPos;
+   }
+
    if (tokens[currPos].ttype == TokenType::ProcDef) {
       cout << "\n";
    }
 
    while (tokens[currPos].ttype == TokenType::ProcDef) {
       currPos = parseProcedureDef(tokens, currPos, size);
-
+      cout << "\n";
       if (currPos == -1) {
          printSectionError("Procedure Declaration");
          return -1;
@@ -115,7 +132,15 @@ int parseGlobalVars(token tokens[], int currPos, int size) {
    currPos++;
    if (currPos >= size) return size;
 
-   if (tokens[currPos].ttype != TokenType::Identifier) {
+   // If it is an array, parse it as an array
+   if (tokens[currPos].ttype == TokenType::Array) {
+      string content = "";
+      currPos = parseArrayDef(tokens, currPos, size, content);
+      if (currPos == -1) return -1;
+      cout << content << ";\n";
+      return currPos;
+   // Otherwise, return an error if its not an identifier
+   } else if (tokens[currPos].ttype != TokenType::Identifier) {
       printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
       return -1;
    }
@@ -170,23 +195,66 @@ int parseProcedureDef(token tokens[], int currPos, int size) {
    currPos++;
    if (currPos >= size) return -1;
 
-   while (isVariableType(tokens[currPos].ttype)) {
+   while (isParameterType(tokens[currPos].ttype)) {
 
          if (params.length() != 0) {
             params += ", ";
          }
 
-         params += tokenToCPPString(tokens[currPos].ttype) + " ";
-         currPos ++;
+         if (tokens[currPos].ttype == TokenType::Array) {
+            currPos++;
+            if (currPos >= size) return -1;
 
-         if (currPos >= size) return -1;
+            if (!isVariableType(tokens[currPos].ttype)) {
+               printError(tokens[currPos], currPos, "Array data type");
+               return -1;
+            }
 
-         if (tokens[currPos].ttype != TokenType::Identifier) {
-            printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
-            return -1;
+            params += tokenToCPPString(tokens[currPos].ttype) + " ";
+            currPos ++;
+
+            if (currPos >= size) return -1;
+
+            if (tokens[currPos].ttype != TokenType::Identifier) {
+               printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+               return -1;
+            }
+
+            params += tokens[currPos].content + "[]";
+         } else if (tokens[currPos].ttype == TokenType::StructType) {
+            currPos++;
+            if (currPos >= size) return -1;
+
+            if (tokens[currPos].ttype != TokenType::Identifier) {
+               printError(tokens[currPos], currPos, "Struct data type");
+               return -1;
+            }
+
+            params += tokens[currPos].content + " ";
+            currPos ++;
+
+            if (currPos >= size) return -1;
+
+            if (tokens[currPos].ttype != TokenType::Identifier) {
+               printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+               return -1;
+            }
+
+            params += "&" + tokens[currPos].content;
+         } else {
+            params += tokenToCPPString(tokens[currPos].ttype) + " ";
+            currPos ++;
+
+            if (currPos >= size) return -1;
+
+            if (tokens[currPos].ttype != TokenType::Identifier) {
+               printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+               return -1;
+            }
+
+            params += tokens[currPos].content;
          }
 
-         params += tokens[currPos].content;
          currPos++;
          if (currPos >= size) return -1;
    }
@@ -214,6 +282,93 @@ int parseProcedureDef(token tokens[], int currPos, int size) {
 }
 
 
+// parse a struct definition
+int parseStructDef(token tokens[], int currPos, int size) {
+   if (currPos >= size) return currPos;
+   
+   string structname = "";
+   string elements = "";
+
+   if (tokens[currPos].ttype != TokenType::StructDef) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::StructDef));
+      return -1;
+   }
+
+   currPos++;
+   if (currPos >= size) return -1;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+      return -1;
+   }
+
+   structname = tokens[currPos].content;
+   currPos++;
+   if (currPos >= size) return -1;
+
+   if (tokens[currPos].ttype != TokenType::Begin) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Begin));
+      return -1;
+   }
+
+   currPos++;
+   if (currPos >= size) return -1;
+
+   while (tokens[currPos].ttype == TokenType::Element) {
+      currPos = parseStructElem(tokens, currPos, size, elements);
+      if (currPos == -1) return -1;
+      currPos++;
+      if (currPos >= size) return -1;
+   }
+
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::End) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::End));
+      return -1;
+   }
+
+   cout << "struct " << structname << "\n{\n" << elements << "};\n";
+
+   return currPos;
+}
+
+
+// parse a struct element
+int parseStructElem(token tokens[], int currPos, int size, string &content) {
+   if (tokens[currPos].ttype != TokenType::Element) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Element));
+      return -1;
+   }
+
+   content += INDENT;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype == TokenType::ArraySet) {
+      currPos = parseArraySet(tokens, currPos, size, content);
+   } else if (tokens[currPos].ttype == TokenType::Identifier) {
+      string elementName = tokens[currPos].content;
+      currPos ++;
+
+      if (currPos >= size) return -1;
+
+      if (!isVariableType(tokens[currPos].ttype)) {
+         printError(tokens[currPos], currPos, "Valid struct element type");
+         return -1;
+      }
+
+      content += tokenToCPPString(tokens[currPos].ttype) + " " + elementName + ";\n";
+
+   } else {
+      printError(tokens[currPos], currPos, "Valid struct element");
+      return -1;
+   }
+   return currPos;
+}
+
+
 // parse a body of code
 int parseBody(token tokens[], int currPos, int size, int indent) {
 
@@ -238,7 +393,7 @@ int parseBody(token tokens[], int currPos, int size, int indent) {
          case Call:
             printIndent(indent + 1);
             currPos = parseProcedureCall(tokens, currPos, size, content);
-            cout << content << "\n;";
+            cout << content << ";\n";
             break;
          case Set:
             currPos = parseSetStmt(tokens, currPos, size, indent + 1);
@@ -258,11 +413,20 @@ int parseBody(token tokens[], int currPos, int size, int indent) {
          case Left:
             currPos = parseStandaloneStmt(tokens, currPos, size, indent + 1);
             break;
-         case ArrayDef:
-            currPos = parseArrayDef(tokens, currPos, size, indent + 1);
-            break;
          case Return:
             currPos = parseReturnStmt(tokens, currPos, size, indent + 1);
+            break;
+         case ArraySet:
+            printIndent(indent + 1);
+            currPos = parseArraySet(tokens, currPos, size, content);
+            cout << content << ";\n";
+            break;
+         case StructBuild:
+            currPos = parseStructBuild(tokens, currPos, size, indent + 1);
+            break;
+         case StructElemSet:
+         case StructIndirElemSet:
+            currPos = parseStructSet(tokens, currPos, size, indent + 1);
             break;
          default:
             printError(tokens[currPos], currPos, "valid expression");
@@ -301,7 +465,15 @@ int parseLocalVarDef(token tokens[], int currPos, int size, int indent) {
    currPos++;
    if (currPos >= size) return size;
 
-   if (tokens[currPos].ttype != TokenType::Identifier) {
+      // If it is an array, parse it as an array
+   if (tokens[currPos].ttype == TokenType::Array) {
+      string content = "";
+      currPos = parseArrayDef(tokens, currPos, size, content);
+      if (currPos == -1) return -1;
+      cout << content << ";\n";
+      return currPos;
+   // Otherwise, return an error if its not an identifier
+   } else if (tokens[currPos].ttype != TokenType::Identifier) {
       printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
       return -1;
    }
@@ -348,15 +520,8 @@ int parseSetStmt(token tokens[], int currPos, int size, int indent) {
    currPos++;
    if (currPos >= size) return size;
 
-   if (isLiteralValue(tokens[currPos].ttype)
-      || (tokens[currPos].ttype == TokenType::Identifier)) {
-         assignValue = tokens[currPos].content;
-   } else if (tokens[currPos].ttype == TokenType::Left) {
-      currPos = parseExpression(tokens, currPos, size, assignValue);
-      if (currPos == -1) return -1;
-   } else {
-      printError(tokens[currPos], currPos, "Variable, literal value, or expression");
-   }
+   currPos = parseExpression(tokens, currPos, size, assignValue);
+   if (currPos == -1) return -1;
 
    printIndent(indent);
    cout << varname << " = " << assignValue << ";\n";
@@ -441,7 +606,7 @@ int parseReturnStmt(token tokens[], int currPos, int size, int indent) {
    currPos ++;
    if (currPos >= size) return -1;
 
-   string content = tokenToCPPString(TokenType::Return) + " ";
+   string content = "return ";
 
    currPos = parseExpression(tokens, currPos, size, content);
 
@@ -541,25 +706,22 @@ int parseIfLoop(token tokens[], int currPos, int size, int indent) {
    if (currPos >= size) return size;
 
    printIndent(indent);
-   cout << tokenToCPPString(TokenType::If) << "(" << condStmt << ");\n";
+   cout << tokenToCPPString(TokenType::If) << "(" << condStmt << ")\n";
 
    // parse the if loop body
    currPos = parseBody(tokens, currPos, size, indent);
 
    if (currPos == -1) return -1;
-   currPos++;
-   if (currPos >= size) return size;
+   if (currPos + 1 >= size) return size;
 
-   if (tokens[currPos].ttype != TokenType::Else) {
-      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Else));
-      return -1;
+   if (tokens[currPos + 1].ttype != TokenType::Else) {
+      return currPos;
    }
 
    currPos++;
-   if (currPos >= size) return size;
 
    // parse the else loop body
-   currPos = parseBody(tokens, currPos, size, indent);
+   currPos = parseBody(tokens, currPos + 1, size, indent);
 
    return currPos;
 }
@@ -631,7 +793,11 @@ int parseExpression(token tokens[], int currPos, int size, string &content) {
       || isLiteralValue(tokens[currPos].ttype)) {
          content += tokens[currPos].content;
          return currPos;
-
+   } else if (tokens[currPos].ttype == TokenType::ArrayAccess) {
+      return parseArrayAccess(tokens, currPos, size, content);
+   } else if (tokens[currPos].ttype == TokenType::StructElemAccess
+      || tokens[currPos].ttype == TokenType::StructIndirElemAccess) {
+      return parseStructAccess(tokens, currPos, size, content);
    } else if (tokens[currPos].ttype == TokenType::Call) {
       return parseProcedureCall(tokens, currPos, size, content);
    } else if (tokens[currPos].ttype == TokenType::Left) {
@@ -778,7 +944,7 @@ int parseCondExpression(token tokens[], int currPos, int size, string &content) 
 
 
 // parse an implementation of an array
-int parseArrayDef(token tokens[], int currPos, int size, int indent) {
+int parseArrayDef(token tokens[], int currPos, int size, string &content) {
    
    if (currPos >= size) return currPos;
 
@@ -786,8 +952,8 @@ int parseArrayDef(token tokens[], int currPos, int size, int indent) {
    string arrayType = "";
    string arraySize = "";
 
-   if (tokens[currPos].ttype != TokenType::ArrayDef) {
-      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::ArrayDef));
+   if (tokens[currPos].ttype != TokenType::Array) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Array));
       return -1;
    }
 
@@ -815,16 +981,233 @@ int parseArrayDef(token tokens[], int currPos, int size, int indent) {
    if (currPos >= size) return size;
 
    if (tokens[currPos].ttype != TokenType::IntLit) {
-      printError(tokens[currPos], currPos, "Array Size");
+      printError(tokens[currPos], currPos, "Valid array Size");
       return -1;
-
-      arraySize = tokens[currPos].content;
    }
 
-   printIndent(indent);
-   cout << arrayType << " " << varname << "[" << arraySize << "];\n";
+   arraySize = tokens[currPos].content;
+
+   content += arrayType + " " + varname + "[" + arraySize + "]";
    return currPos;
 }
+
+
+// parse an array set statement
+int parseArraySet(token tokens[], int currPos, int size, string &content) {
+   if (currPos >= size) return currPos;
+
+   string varname = "";
+   string index = "";
+   string value = "";
+
+   if (tokens[currPos].ttype != TokenType::ArraySet) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::ArraySet));
+      return -1;
+   }
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+      return -1;
+   }
+
+   varname += tokens[currPos].content;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::IntLit
+      && tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, "Valid array index");
+      return -1;
+   }
+
+   index += tokens[currPos].content;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   currPos = parseExpression(tokens, currPos, size, value);
+
+   if (currPos == -1) return -1;
+
+   content += varname + "[" + index + "] = " + value;
+
+   return currPos;
+}
+
+
+// parse an array access statement
+int parseArrayAccess(token tokens[], int currPos, int size, string &content) {
+   if (currPos >= size) return currPos;
+
+   string varname = "";
+   string index = "";
+
+   if (tokens[currPos].ttype != TokenType::ArrayAccess) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::ArrayAccess));
+      return -1;
+   }
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+      return -1;
+   }
+
+   varname += tokens[currPos].content;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::IntLit
+      && tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, "Valid array index");
+      return -1;
+   }
+
+   index += tokens[currPos].content;
+
+   content += varname + "[" + index + "]";
+
+   return currPos;
+}
+
+
+// parse a struct build statement
+int parseStructBuild(token tokens[], int currPos, int size, int indent) {
+   if (currPos >= size) return currPos;
+
+   string structtype = "";
+   string structname = "";
+
+   if (tokens[currPos].ttype != TokenType::StructBuild) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::StructBuild));
+      return -1;
+   }
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, "Valid struct type");
+      return -1;
+   }
+
+   structtype = tokens[currPos].content;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
+      return -1;
+   }
+
+   structname = tokens[currPos].content;
+
+   printIndent(indent);
+   cout << structtype << " " << structname << ";\n";
+   return currPos;
+}
+
+
+// parse a struct set statement
+int parseStructSet(token tokens[], int currPos, int size, int indent) {
+   if (currPos >= size) return currPos;
+
+   string structname = "";
+   string element = "";
+   string value = "";
+   string op = "";
+
+   if (tokens[currPos].ttype == TokenType::StructElemSet
+      || tokens[currPos].ttype == TokenType::StructIndirElemSet) {
+      op = tokenToCPPString(tokens[currPos].ttype);
+   } else {
+      printError(tokens[currPos], currPos, "Struct set operator");
+      return -1;
+   }
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, "Struct identifier");
+      return -1;
+   }
+
+   structname += tokens[currPos].content;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, "Struct element identifier");
+      return -1;
+   }
+
+   element += tokens[currPos].content;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   currPos = parseExpression(tokens, currPos, size, value);
+
+   if (currPos == -1) return -1;
+
+   printIndent(indent);
+   cout << structname << op << element << " = " << value << ";\n";
+
+   return currPos;
+}
+
+
+// parse a struct access statement
+int parseStructAccess(token tokens[], int currPos, int size, string &content) {
+   if (currPos >= size) return currPos;
+
+   string structname = "";
+   string element = "";
+   string op = "";
+
+   if (tokens[currPos].ttype == TokenType::StructElemAccess
+      || tokens[currPos].ttype == TokenType::StructIndirElemAccess) {
+      op = tokenToCPPString(tokens[currPos].ttype);
+   } else {
+      printError(tokens[currPos], currPos, "Struct access operator");
+      return -1;
+   }
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, "Struct identifier");
+      return -1;
+   }
+
+   structname += tokens[currPos].content;
+
+   currPos++;
+   if (currPos >= size) return size;
+
+   if (tokens[currPos].ttype != TokenType::Identifier) {
+      printError(tokens[currPos], currPos, "Struct element identifier");
+      return -1;
+   }
+
+   element += tokens[currPos].content;
+
+   content += structname + op + element;
+
+   return currPos;
+}
+
 
 
 // prints an error message to cerr indicating the type and position
@@ -907,6 +1290,11 @@ string tokenToCPPString(TokenType type) {
          return "-";
       case NotOp:
          return "!";
+      case StructIndirElemAccess:
+      case StructIndirElemSet:
+      case StructElemAccess:
+      case StructElemSet:
+         return ".";
       case Main:
          return "\nint main()\n";
       case If:
@@ -943,7 +1331,8 @@ bool isParameterType(TokenType token) {
       || token == TokenType::RealType
       || token == TokenType::TextType
       || token == TokenType::BoolType
-      || token == TokenType::VoidType);
+      || token == TokenType::Array
+      || token == TokenType::StructType);
 }
 
 
