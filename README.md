@@ -62,7 +62,7 @@ Language tokens (all case sensitive)
    left right (used to bracket expressions)
    call (used to call a procedure)
    return (used to return a value from a procedure)
-   arraydef arrayset arrayaccess array (used with arrays)
+   array arrayset arrayaccess (used with arrays)
    structtype structelemset structindirelemset structelemaccess structindirelemaccess (used with structs)
 
 ### Literal values
@@ -239,7 +239,7 @@ set *variableident* call *ident* left *params* right
 sdef *identifier*
 begin
     element *identifier* *type*
-    element *identifier* *type*
+    element array *identifier* *type* *size*
 end
 
 #### Structure Initialization
