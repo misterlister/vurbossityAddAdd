@@ -5,9 +5,7 @@ begin
     element charClass text
     element level integer
     element health integer
-    element item1 text
-    element item2 text
-    element item3 text
+    element array inventory text 3
 end
 
 COM Define Party struct
@@ -23,38 +21,38 @@ pdef initCharacter left structtype Character c text itemOne text itemTwo text it
 begin
     structindirelemset c level 1
     structindirelemset c health 100
-    structindirelemset c item1 itemOne
-    structindirelemset c item2 itemTwo
-    structindirelemset c item3 itemThree
+    arrayset structindirelemaccess c inventory 0 itemOne
+    arrayset structindirelemaccess c inventory 1 itemTwo
+    arrayset structindirelemaccess c inventory 2 itemThree
 end
 
 COM Procedure to print a character
 pdef printCharacter left structtype Character c right void
 begin
     write "Name: "
-    write structelemaccess c name
+    write structindirelemaccess c name
     write "Class: "
-    write structelemaccess c charClass
+    write structindirelemaccess c charClass
     write "Level: "
-    write structelemaccess c level
+    write structindirelemaccess c level
     write "Health: "
-    write structelemaccess c health
+    write structindirelemaccess c health
     write "Item 1: "
-    write structelemaccess c item1
+    write arrayaccess structindirelemaccess c inventory 0
     write "Item 2: "
-    write structelemaccess c item2
+    write arrayaccess structindirelemaccess c inventory 1
     write "Item 3: "
-    write structelemaccess c item3
+    write arrayaccess structindirelemaccess c inventory 2
 end
 
 COM Procedure to print all characters in the party
 pdef printParty left structtype Party p right void
 begin
-    call printCharacter left structelemaccess p member1 right
+    call printCharacter left structindirelemaccess p member1 right
     write ""
-    call printCharacter left structelemaccess p member2 right
+    call printCharacter left structindirelemaccess p member2 right
     write ""
-    call printCharacter left structelemaccess p member3 right
+    call printCharacter left structindirelemaccess p member3 right
     write ""
 end
 
