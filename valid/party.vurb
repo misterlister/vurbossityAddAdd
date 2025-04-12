@@ -1,0 +1,82 @@
+COM Define Character struct
+sdef Character
+begin
+    element name text
+    element charClass text
+    element level integer
+    element health integer
+    element item1 text
+    element item2 text
+    element item3 text
+end
+
+COM Define Party struct
+sdef Party
+begin
+    element structtype Character member1
+    element structtype Character member2
+    element structtype Character member3
+end
+
+COM Procedure to initialize a character
+pdef initCharacter left structtype Character c text itemOne text itemTwo text itemThree right void
+begin
+    structindirelemset c level 1
+    structindirelemset c health 100
+    structindirelemset c item1 itemOne
+    structindirelemset c item2 itemTwo
+    structindirelemset c item3 itemThree
+end
+
+COM Procedure to print a character
+pdef printCharacter left structtype Character c right void
+begin
+    write "Name: "
+    write structelemaccess c name
+    write "Class: "
+    write structelemaccess c charClass
+    write "Level: "
+    write structelemaccess c level
+    write "Health: "
+    write structelemaccess c health
+    write "Item 1: "
+    write structelemaccess c item1
+    write "Item 2: "
+    write structelemaccess c item2
+    write "Item 3: "
+    write structelemaccess c item3
+end
+
+COM Procedure to print all characters in the party
+pdef printParty left structtype Party p right void
+begin
+    call printCharacter left structelemaccess p member1 right
+    write ""
+    call printCharacter left structelemaccess p member2 right
+    write ""
+    call printCharacter left structelemaccess p member3 right
+    write ""
+end
+
+
+main
+begin
+    vdef structtype Party myParty
+
+    set structelemaccess structelemaccess myParty member1 name "Garen"
+    set structelemaccess structelemaccess myParty member1 charClass "Warrior"
+    call initCharacter left structelemaccess myParty member1 "Sword" "Shield" "Helmet" right
+
+    set structelemaccess structelemaccess myParty member2 name "Lux"
+    set structelemaccess structelemaccess myParty member2 charClass "Mage"
+    call initCharacter left structelemaccess myParty member2 "Staff" "Spellbook" "Robe" right
+
+    set structelemaccess structelemaccess myParty member3 name "Katarina"
+    set structelemaccess structelemaccess myParty member3 charClass "Rogue"
+    call initCharacter left structelemaccess myParty member3 "Dagger" "Lockpick" "Cloak" right
+
+    write "Party Status:"
+    write ""
+
+    call printParty left myParty right
+end
