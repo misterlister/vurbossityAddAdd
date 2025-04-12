@@ -349,7 +349,7 @@ int parseStructElem(token tokens[], int currPos, int size, string &content) {
    currPos++;
    if (currPos >= size) return size;
 
-   if (tokens[currPos].ttype == TokenType::ArraySet) {
+   if (tokens[currPos].ttype == TokenType::Array) {
       currPos = parseArrayDef(tokens, currPos, size, content);
    } else if (tokens[currPos].ttype == TokenType::StructType) {
       currPos = parseStructBuild(tokens, currPos, size, content);
@@ -1023,12 +1023,20 @@ int parseArraySet(token tokens[], int currPos, int size, string &content) {
    currPos++;
    if (currPos >= size) return size;
 
-   if (tokens[currPos].ttype != TokenType::Identifier) {
+   // Get the struct path if this is an array inside a struct
+   if (tokens[currPos].ttype == TokenType::StructElemAccess
+      || tokens[currPos].ttype == TokenType::StructIndirElemAccess) {
+      currPos = parseStructAccess(tokens, currPos, size, varname);
+   // Otherwise get the name of the variable, if its an identifier
+   } else if (tokens[currPos].ttype == TokenType::Identifier) {
+      varname += tokens[currPos].content;
+   // Otherwise its an error
+   } else {
       printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
       return -1;
    }
 
-   varname += tokens[currPos].content;
+   if (currPos == -1) return -1;
 
    currPos++;
    if (currPos >= size) return size;
@@ -1069,12 +1077,20 @@ int parseArrayAccess(token tokens[], int currPos, int size, string &content) {
    currPos++;
    if (currPos >= size) return size;
 
-   if (tokens[currPos].ttype != TokenType::Identifier) {
+   // Get the struct path if this is an array inside a struct
+   if (tokens[currPos].ttype == TokenType::StructElemAccess
+      || tokens[currPos].ttype == TokenType::StructIndirElemAccess) {
+      currPos = parseStructAccess(tokens, currPos, size, varname);
+   // Otherwise get the name of the variable, if its an identifier
+   } else if (tokens[currPos].ttype == TokenType::Identifier) {
+      varname += tokens[currPos].content;
+   // Otherwise its an error
+   } else {
       printError(tokens[currPos], currPos, tokenTypeToString(TokenType::Identifier));
       return -1;
    }
 
-   varname += tokens[currPos].content;
+   if (currPos == -1) return -1;
 
    currPos++;
    if (currPos >= size) return size;
