@@ -103,7 +103,7 @@ int parseArrayAccess(token tokens[], int currPos, int size, string &content);
 
 
 // parse a struct build statement
-int parseStructBuild(token tokens[], int currPos, int size, int indent);
+int parseStructBuild(token tokens[], int currPos, int size, string &content);
 
 
 // parse a struct set statement
