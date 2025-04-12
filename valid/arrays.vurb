@@ -2,6 +2,7 @@ gdef array myArray integer 5
 gdef sumResults integer
 gdef array modifiedArray integer 5
 
+COM initializes array to values 1-5
 pdef initArray left array integer myArray right void
 begin
     arrayset myArray 0 1
@@ -11,6 +12,7 @@ begin
     arrayset myArray 4 5
 end
 
+COM sums all values in the array
 pdef sumArray left array integer myArray right integer
 begin
     vdef index integer
@@ -25,6 +27,7 @@ begin
     return total
 end
 
+COM doubles all values in the array
 pdef multiplyArray left array integer myArray right void
 begin
     vdef index integer
@@ -36,6 +39,7 @@ begin
     end
 end
 
+COM prints out all values in the array
 pdef printArray left array integer arr integer size right void
 begin
     vdef index integer

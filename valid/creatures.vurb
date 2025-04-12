@@ -1,3 +1,4 @@
+COM struct that represents a creature
 sdef Creature
 begin
     element name text
@@ -5,6 +6,7 @@ begin
     element energy integer
 end
 
+COM initializes a creature struct
 pdef initCreature left structtype Creature creature right void
 begin
     structindirelemset creature name "Unnamed"
@@ -12,6 +14,7 @@ begin
     structindirelemset creature energy 50
 end
 
+COM inflicts damage to the defender equal to the attacker's energy stat
 pdef damageCreature left structtype Creature attacker structtype Creature defender right void
 begin
     vdef damage integer
@@ -19,6 +22,7 @@ begin
     structindirelemset defender hp left sub structindirelemaccess defender hp damage right
 end
 
+COM heals the creature equal to half of their energy stat
 pdef healCreature left structtype Creature creature right void
 begin
     vdef heal integer
@@ -26,6 +30,7 @@ begin
     structindirelemset creature hp left add structindirelemaccess creature hp heal right
 end
 
+COM prints out a creature's information
 pdef printCreature left structtype Creature creature right void
 begin
     write "Name: "
@@ -36,6 +41,7 @@ begin
     write structindirelemaccess creature energy
 end
 
+COM increases a creature's energy by 20
 pdef powerUpCreature left structtype Creature creature right void
 begin
     vdef boost integer
@@ -45,8 +51,8 @@ end
 
 main
 begin
-    structbuild Creature player
-    structbuild Creature enemy
+    vdef structtype Creature player
+    vdef structtype Creature enemy
 
     call initCreature left player right
     call initCreature left enemy right

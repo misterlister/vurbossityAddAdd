@@ -1,7 +1,7 @@
 gdef total integer
 
-pdef addTwoNumbers
-left integer a integer b right void
+COM adds two numbers together
+pdef addTwoNumbers left integer a integer b right void
 begin
     vdef result integer
     set result left add a b right
